@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CV Builder — Crie seu currículo profissional</title>
+  <meta name="description" content="Crie um currículo profissional no navegador, sem conta e sem enviar dados para servidores. Exporte em PDF A4.">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="brand">
+      <img src="assets/favicon.svg" alt="" width="24" height="24">
+      <span>CV Builder</span>
+    </div>
+    <div class="header-actions">
+      <span class="save-status" id="saveStatus" data-state="idle" aria-live="polite"></span>
+      <a class="btn btn-ghost only-mobile" href="#preview">Ver CV</a>
+      <button type="button" class="btn btn-ghost" data-action="clear-cv">Limpar CV</button>
+      <button type="button" class="btn btn-primary" data-action="export">Download / Export PDF</button>
+    </div>
+  </header>
+
+  <noscript><p class="noscript">O CV Builder precisa de JavaScript ativado para funcionar.</p></noscript>
+
+  <div class="app">
+
+    <!-- ============ EDITOR ============ -->
+    <aside class="editor" id="editor" aria-label="Editor do currículo">
+
+      <div class="panel">
+        <h2>Seções do currículo</h2>
+        <p class="hint">Escolha o que aparece no CV. Os dados de uma seção removida ficam guardados.</p>
+        <div class="chips" id="sectionBar" role="group" aria-label="Seções do currículo"></div>
+      </div>
+
+      <section class="panel" id="panel-personal">
+        <div class="panel-head"><h2>Informações pessoais</h2></div>
+
+        <div class="photo-row">
+          <div class="photo-thumb" id="photoThumb" aria-hidden="true"></div>
+          <div class="photo-actions">
+            <div class="btn-row">
+              <button type="button" class="btn btn-sm" id="photoBtn" data-action="upload-photo">Enviar foto</button>
+              <button type="button" class="btn btn-sm btn-ghost" id="photoRemove" data-action="remove-photo" hidden>Remover foto</button>
+            </div>
+            <p class="hint">JPG, PNG ou WebP. A foto não sai do seu navegador.</p>
+          </div>
+          <input type="file" id="photoInput" accept="image/png,image/jpeg,image/webp" hidden>
+        </div>
+
+        <div class="grid">
+          <div class="field full">
+            <label for="p-name">Nome completo</label>
+            <input id="p-name" type="text" data-bind="personal.name" placeholder="Ex.: Maria Fernanda Costa" autocomplete="name">
+          </div>
+          <div class="field full">
+            <label for="p-title">Cargo ou profissão</label>
+            <input id="p-title" type="text" data-bind="personal.title" placeholder="Ex.: Designer de Produto" autocomplete="organization-title">
+          </div>
+          <div class="field">
+            <label for="p-email">Email</label>
+            <input id="p-email" type="email" data-bind="personal.email" placeholder="nome@exemplo.com" autocomplete="email">
+          </div>
+          <div class="field">
+            <label for="p-phone">Telefone</label>
+            <input id="p-phone" type="tel" data-bind="personal.phone" placeholder="+258 84 000 0000" autocomplete="tel">
+          </div>
+          <div class="field full">
+            <label for="p-location">Localização</label>
+            <input id="p-location" type="text" data-bind="personal.location" placeholder="Ex.: Maputo, Moçambique" autocomplete="address-level2">
+          </div>
+          <div class="field full">
+            <label for="p-website">Website</label>
+            <input id="p-website" type="text" data-bind="personal.website" placeholder="meusite.com" autocomplete="url">
+          </div>
+          <div class="field">
+            <label for="p-linkedin">LinkedIn</label>
+            <input id="p-linkedin" type="text" data-bind="personal.linkedin" placeholder="linkedin.com/in/usuario" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="p-github">GitHub</label>
+            <input id="p-github" type="text" data-bind="personal.github" placeholder="github.com/usuario" autocomplete="off">
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" data-section="summary">
+        <div class="panel-head">
+          <h2>Perfil profissional</h2>
+          <button type="button" class="link-btn" data-action="remove-section" data-key="summary">Remover seção</button>
+        </div>
+        <div class="field">
+          <label for="p-summary">Apresentação</label>
+          <textarea id="p-summary" rows="5" data-bind="summary" placeholder="Em 2 a 4 linhas: quem você é, o que faz de melhor e o que procura."></textarea>
+        </div>
+      </section>
+
+      <section class="panel" data-section="experience">
+        <div class="panel-head">
+          <h2>Experiência profissional</h2>
+          <button type="button" class="link-btn" data-action="remove-section" data-key="experience">Remover seção</button>
+        </div>
+        <div id="list-experience"></div>
+        <button type="button" class="btn btn-add" data-action="add-item" data-list="experience">Adicionar experiência</button>
+      </section>
+
+      <section class="panel" data-section="education">
+        <div class="panel-head">
+          <h2>Educação</h2>
+          <button type="button" class="link-btn" data-action="remove-section" data-key="education">Remover seção</button>
+        </div>
+        <div id="list-education"></div>
+        <button type="button" class="btn btn-add" data-action="add-item" data-list="education">Adicionar formação</button>
+      </section>
+
+      <section class="panel" data-section="skills">
+        <div class="panel-head">
+          <h2>Skills</h2>
+          <button type="button" class="link-btn" data-action="remove-section" data-key="skills">Remover seção</button>
+        </div>
+        <div class="err-host">
+          <div class="inline-add">
+            <input id="skillInput" type="text" placeholder="Ex.: JavaScript, Figma, Gestão de projetos" aria-label="Nova skill" autocomplete="off">
+            <button type="button" class="btn" data-action="add-skill">Adicionar</button>
+          </div>
+        </div>
+        <p class="hint">Pressione Enter ou use vírgulas para adicionar várias de uma vez.</p>
+        <ul class="skill-list" id="list-skills"></ul>
+      </section>
+
+      <section class="panel" data-section="languages">
+        <div class="panel-head">
+          <h2>Idiomas</h2>
+          <button type="button" class="link-btn" data-action="remove-section" data-key="languages">Remover seção</button>
+        </div>
+        <div id="list-languages"></div>
+        <button type="button" class="btn btn-add" data-action="add-item" data-list="languages">Adicionar idioma</button>
+      </section>
+
+      <section class="panel" data-section="projects">
+        <div class="panel-head">
+          <h2>Projetos</h2>
+          <button type="button" class="link-btn" data-action="remove-section" data-key="projects">Remover seção</button>
+        </div>
+        <div id="list-projects"></div>
+        <button type="button" class="btn btn-add" data-action="add-item" data-list="projects">Adicionar projeto</button>
+      </section>
+
+      <section class="panel panel-storage">
+        <div class="panel-head"><h2>Dados salvos</h2></div>
+        <p class="hint">Tudo fica apenas neste navegador. Nada é enviado para servidores.</p>
+        <label class="switch">
+          <input type="checkbox" id="autosave">
+          <span>Salvar automaticamente neste navegador</span>
+        </label>
+        <div class="btn-row">
+          <button type="button" class="btn btn-sm" data-action="clear-saved">Limpar dados salvos</button>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- ============ PREVIEW ============ -->
+    <main class="preview" id="preview" aria-label="Pré-visualização do currículo">
+      <div class="preview-toolbar">
+        <div class="seg" role="group" aria-label="Modelo do currículo">
+          <button type="button" data-action="set-template" data-template="minimal" aria-pressed="true">Minimal</button>
+          <button type="button" data-action="set-template" data-template="executive" aria-pressed="false">Executive</button>
+        </div>
+        <span class="page-count" id="pageCount">1 página A4</span>
+      </div>
+
+      <div class="preview-stage" id="stage">
+        <div class="sheet-scaler" id="scaler">
+          <div class="cv-sheet tpl-minimal" id="sheet">
+            <!-- Tabela usada só para repetir as margens superior/inferior em cada página impressa -->
+            <table class="cv-frame">
+              <thead><tr><td><div class="cv-margin"></div></td></tr></thead>
+              <tfoot><tr><td><div class="cv-margin"></div></td></tr></tfoot>
+              <tbody><tr><td><div class="cv-content" id="cvContent"></div></td></tr></tbody>
+            </table>
+            <div id="pageGuides"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="dlg">
+    <form method="dialog" class="dlg-body">
+      <h2 id="dlgTitle"></h2>
+      <p id="dlgText"></p>
+      <div class="dlg-actions">
+        <button type="submit" class="btn" value="cancel">Cancelar</button>
+        <button type="submit" class="btn btn-danger" id="dlgOk" value="ok">Confirmar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>
